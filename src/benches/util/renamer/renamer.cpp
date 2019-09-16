@@ -151,7 +151,7 @@ StringRef renameFunction(StringRef fname) {
 
 class RenamerPass : public FunctionPass {
 	Module* module;
-
+	LLVMContext TheContext;
 	public:
 	static char ID; // Pass identification, replacement for typeid
 
@@ -196,7 +196,7 @@ class RenamerPass : public FunctionPass {
 						// type of second arg -- i8 and i32 respectively;
 						// we fix it here
 						if (i == 1 && func->getName().startswith("llvm.memset.")) {
-							arg = irBuilder.CreateZExt(arg, Type::getInt32Ty(getGlobalContext()));
+							arg = irBuilder.CreateZExt(arg, Type::getInt32Ty(TheContext));
 						}
 
 						argsVec.push_back(arg);

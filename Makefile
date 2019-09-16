@@ -1,8 +1,8 @@
 IMG_NAME = haft
 CONTAINER_NAME = haft_container
 
-DOCKER = sudo docker
-DOCKER_RUN = $(DOCKER) run -it -v `pwd`/data:/data
+DOCKER = docker
+DOCKER_RUN = $(DOCKER) run --cap-add SYS_ADMIN -it -v `pwd`/data:/data
 
 .PHONY: all build run clean stop clean_all
 

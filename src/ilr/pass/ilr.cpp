@@ -83,36 +83,39 @@ class SwiftHelpers {
 		helpers.insert(F);
 	}
 
+	LLVMContext TheContext;
+
 	public:
 	Type2FunctionMap movers;
 	Type2FunctionMap checkers;
 	Function* detectedfunc;
 	std::set<Function*> helpers;
 	Module* module;
+	
 
 	SwiftHelpers(Module& M) {
 		module = &M;
-		addFunction(M, checkers, "SWIFT$check_i8",     Type::getInt8Ty(getGlobalContext()));
-		addFunction(M, checkers, "SWIFT$check_i16",    Type::getInt16Ty(getGlobalContext()));
-		addFunction(M, checkers, "SWIFT$check_i32",    Type::getInt32Ty(getGlobalContext()));
-		addFunction(M, checkers, "SWIFT$check_i64",    Type::getInt64Ty(getGlobalContext()));
-		addFunction(M, checkers, "SWIFT$check_ptr",    PointerType::getUnqual(Type::getInt8Ty(getGlobalContext())));
-		addFunction(M, checkers, "SWIFT$check_double", Type::getDoubleTy(getGlobalContext()));
-		addFunction(M, checkers, "SWIFT$check_float",  Type::getFloatTy(getGlobalContext()));
-		addFunction(M, checkers, "SWIFT$check_dq",     VectorType::get(Type::getInt64Ty(getGlobalContext()),  2));
-		addFunction(M, checkers, "SWIFT$check_pd",     VectorType::get(Type::getDoubleTy(getGlobalContext()), 2));
-		addFunction(M, checkers, "SWIFT$check_ps",     VectorType::get(Type::getFloatTy(getGlobalContext()),  4));
+		addFunction(M, checkers, "SWIFT$check_i8",     Type::getInt8Ty(module->getContext()));
+		addFunction(M, checkers, "SWIFT$check_i16",    Type::getInt16Ty(module->getContext()));
+		addFunction(M, checkers, "SWIFT$check_i32",    Type::getInt32Ty(module->getContext()));
+		addFunction(M, checkers, "SWIFT$check_i64",    Type::getInt64Ty(module->getContext()));
+		addFunction(M, checkers, "SWIFT$check_ptr",    PointerType::getUnqual(Type::getInt8Ty(module->getContext())));
+		addFunction(M, checkers, "SWIFT$check_double", Type::getDoubleTy(module->getContext()));
+		addFunction(M, checkers, "SWIFT$check_float",  Type::getFloatTy(module->getContext()));
+		addFunction(M, checkers, "SWIFT$check_dq",     VectorType::get(Type::getInt64Ty(module->getContext()),  2));
+		addFunction(M, checkers, "SWIFT$check_pd",     VectorType::get(Type::getDoubleTy(module->getContext()), 2));
+		addFunction(M, checkers, "SWIFT$check_ps",     VectorType::get(Type::getFloatTy(module->getContext()),  4));
 
-		addFunction(M, movers, "SWIFT$move_i8",     Type::getInt8Ty(getGlobalContext()));
-		addFunction(M, movers, "SWIFT$move_i16",    Type::getInt16Ty(getGlobalContext()));
-		addFunction(M, movers, "SWIFT$move_i32",    Type::getInt32Ty(getGlobalContext()));
-		addFunction(M, movers, "SWIFT$move_i64",    Type::getInt64Ty(getGlobalContext()));
-		addFunction(M, movers, "SWIFT$move_ptr",    PointerType::getUnqual(Type::getInt8Ty(getGlobalContext())));
-		addFunction(M, movers, "SWIFT$move_double", Type::getDoubleTy(getGlobalContext()));
-		addFunction(M, movers, "SWIFT$move_float",  Type::getFloatTy(getGlobalContext()));
-		addFunction(M, movers, "SWIFT$move_dq",     VectorType::get(Type::getInt64Ty(getGlobalContext()),  2));
-		addFunction(M, movers, "SWIFT$move_pd",     VectorType::get(Type::getDoubleTy(getGlobalContext()), 2));
-		addFunction(M, movers, "SWIFT$move_ps",     VectorType::get(Type::getFloatTy(getGlobalContext()),  4));
+		addFunction(M, movers, "SWIFT$move_i8",     Type::getInt8Ty(module->getContext()));
+		addFunction(M, movers, "SWIFT$move_i16",    Type::getInt16Ty(module->getContext()));
+		addFunction(M, movers, "SWIFT$move_i32",    Type::getInt32Ty(module->getContext()));
+		addFunction(M, movers, "SWIFT$move_i64",    Type::getInt64Ty(module->getContext()));
+		addFunction(M, movers, "SWIFT$move_ptr",    PointerType::getUnqual(Type::getInt8Ty(module->getContext())));
+		addFunction(M, movers, "SWIFT$move_double", Type::getDoubleTy(module->getContext()));
+		addFunction(M, movers, "SWIFT$move_float",  Type::getFloatTy(module->getContext()));
+		addFunction(M, movers, "SWIFT$move_dq",     VectorType::get(Type::getInt64Ty(module->getContext()),  2));
+		addFunction(M, movers, "SWIFT$move_pd",     VectorType::get(Type::getDoubleTy(module->getContext()), 2));
+		addFunction(M, movers, "SWIFT$move_ps",     VectorType::get(Type::getFloatTy(module->getContext()),  4));
 
 		detectedfunc = M.getFunction("SWIFT$detected");
 		assert(detectedfunc && "swift function <detected> not found (requires linked swift-interface");
@@ -295,21 +298,24 @@ class SwiftTransformer {
 	std::vector<PHINode*> phis;
 	std::vector<BranchInst*> brs;
 	BasicBlock* detectedBB = nullptr;
+	
 
 	unsigned long next_id = 0;
 
 	Value* castToSupportedType(IRBuilder<>& irBuilder, Value* v) {
 		Type *Ty = v->getType();
 
+		
+
 		switch (Ty->getTypeID()) {
 			case Type::IntegerTyID: {
-				Type* TargetType = Type::getInt64Ty(getGlobalContext());
+				Type* TargetType = Type::getInt64Ty(Ty->getContext());
 				if (Ty->getPrimitiveSizeInBits() <= 8)
-					TargetType = Type::getInt8Ty(getGlobalContext());
+					TargetType = Type::getInt8Ty(Ty->getContext());
 				else if (Ty->getPrimitiveSizeInBits() <= 16)
-					TargetType = Type::getInt16Ty(getGlobalContext());
+					TargetType = Type::getInt16Ty(Ty->getContext());
 				else if (Ty->getPrimitiveSizeInBits() <= 32)
-					TargetType = Type::getInt32Ty(getGlobalContext());
+					TargetType = Type::getInt32Ty(Ty->getContext());
 
 				if (Ty->getPrimitiveSizeInBits() < TargetType->getPrimitiveSizeInBits())
 					v = irBuilder.CreateZExt(v, TargetType, "swift.intcast");
@@ -317,7 +323,7 @@ class SwiftTransformer {
 				break;
 
 			case Type::PointerTyID: {
-				Type* TyPtrToI8 = PointerType::getUnqual(Type::getInt8Ty(getGlobalContext()));
+				Type* TyPtrToI8 = PointerType::getUnqual(Type::getInt8Ty(Ty->getContext()));
 				if (Ty != TyPtrToI8)
 					v = irBuilder.CreateBitCast(v, TyPtrToI8, "swift.ptrcast");
 				}
@@ -329,23 +335,23 @@ class SwiftTransformer {
 
 			case Type::HalfTyID: {
 					// TODO: this can change the precision, ignore?
-					v = irBuilder.CreateFPExt(v, Type::getFloatTy(getGlobalContext()), "swift.halfcast");
+					v = irBuilder.CreateFPExt(v, Type::getFloatTy(Ty->getContext()), "swift.halfcast");
 				}
 				break;
 
 			case Type::X86_FP80TyID: {
 					// TODO: this can change the precision, ignore?
-					v = irBuilder.CreateFPTrunc(v, Type::getDoubleTy(getGlobalContext()), "swift.fp80cast");
+					v = irBuilder.CreateFPTrunc(v, Type::getDoubleTy(Ty->getContext()), "swift.fp80cast");
 				}
 				break;
 
 			case Type::VectorTyID: {
-				Type* TyVecInt64  = VectorType::get(Type::getInt64Ty(getGlobalContext()), 2);
-				Type* TyVecInt32  = VectorType::get(Type::getInt32Ty(getGlobalContext()), 4);
-				Type* TyVecInt16  = VectorType::get(Type::getInt16Ty(getGlobalContext()), 8);
-				Type* TyVecInt8  = VectorType::get(Type::getInt8Ty(getGlobalContext()), 16);
-				Type* TyVecFloat  = VectorType::get(Type::getFloatTy(getGlobalContext()), 4);
-				Type* TyVecDouble = VectorType::get(Type::getDoubleTy(getGlobalContext()), 2);
+				Type* TyVecInt64  = VectorType::get(Type::getInt64Ty(Ty->getContext()), 2);
+				Type* TyVecInt32  = VectorType::get(Type::getInt32Ty(Ty->getContext()), 4);
+				Type* TyVecInt16  = VectorType::get(Type::getInt16Ty(Ty->getContext()), 8);
+				Type* TyVecInt8  = VectorType::get(Type::getInt8Ty(Ty->getContext()), 16);
+				Type* TyVecFloat  = VectorType::get(Type::getFloatTy(Ty->getContext()), 4);
+				Type* TyVecDouble = VectorType::get(Type::getDoubleTy(Ty->getContext()), 2);
 
 				Type* VecTy = Ty->getVectorElementType();
 				if (VecTy->isIntegerTy() && Ty != TyVecInt64) {
@@ -433,7 +439,7 @@ class SwiftTransformer {
 			v2 = irBuilder.CreateCall(it2->second, v2, "swift.movetocheck");
 		}
 
-		Value* id = ConstantInt::get(Type::getInt32Ty(getGlobalContext()), next_id++);
+		Value* id = ConstantInt::get(Type::getInt32Ty(irBuilder.getContext()), next_id++);
 
 		std::vector<Value*> argsVec;
 		argsVec.push_back(v1);
@@ -487,10 +493,10 @@ class SwiftTransformer {
 
 			// we could have a vector of non-64-bit integers, need to cast back
 			if (v->getType()->isVectorTy() && origType->getVectorElementType()->isIntegerTy()) {
-					Type* TyVecInt64  = VectorType::get(Type::getInt64Ty(getGlobalContext()), 2);
-					Type* TyVecInt32  = VectorType::get(Type::getInt32Ty(getGlobalContext()), 4);
-					Type* TyVecInt16  = VectorType::get(Type::getInt16Ty(getGlobalContext()), 8);
-					Type* TyVecInt8  = VectorType::get(Type::getInt8Ty(getGlobalContext()), 16);
+					Type* TyVecInt64  = VectorType::get(Type::getInt64Ty(move->getContext()), 2);
+					Type* TyVecInt32  = VectorType::get(Type::getInt32Ty(move->getContext()), 4);
+					Type* TyVecInt16  = VectorType::get(Type::getInt16Ty(move->getContext()), 8);
+					Type* TyVecInt8  = VectorType::get(Type::getInt8Ty(move->getContext()), 16);
 
 					unsigned NumEl = cast<VectorType>(origType)->getNumElements();
 					switch (NumEl) {
@@ -960,8 +966,8 @@ class SwiftTransformer {
 			// insert BB with explicit checks for selected phis,
 			// this BB will be subsequently transformed by Trans and
 			// executed before conditional Tx-end
-			ConstantInt* CondZero = ConstantInt::get(Type::getInt1Ty(getGlobalContext()), 0);
-			TerminatorInst* CheckTerm = SplitBlockAndInsertIfThen(CondZero, header->getFirstNonPHI(), false, nullptr, DT);
+			ConstantInt* CondZero = ConstantInt::get(Type::getInt1Ty(header->getContext()), 0);
+			Instruction* CheckTerm = SplitBlockAndInsertIfThen(CondZero, header->getFirstNonPHI(), false, nullptr, DT);
 
 			IRBuilder<> irBuilder(CheckTerm);
 			for (auto phiIt = phiesToCheck.begin(); phiIt != phiesToCheck.end(); ++phiIt) {

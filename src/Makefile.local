@@ -1,9 +1,9 @@
 # ===== LLVM PATHS =====
-LLVM_PATH = $(HOME)/bin/llvm/build/bin/
+LLVM_PATH = $(HOME)/git/tud/build-ll/bin/
 
 # ===== PASSES PATHS =====
-TX_PATH  = $(HOME)/code/haft/src/tx/
-ILR_PATH = $(HOME)/code/haft/src/ilr/
+TX_PATH  = $(HOME)/git/tud/haft/src/tx/
+ILR_PATH = $(HOME)/git/tud/haft/src/ilr/
 
 # ===== ADDITIONAL FLAGS =====
 # version of HTM to use -- tx_debug.c  tx_ibm.c  tx_intel.c

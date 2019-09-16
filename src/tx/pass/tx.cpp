@@ -174,6 +174,8 @@ class Transactifier {
 
 	std::set<Instruction*> LocksToOptimize;
 
+	LLVMContext TheContext;
+
 public:
 
 	Transactifier(LoopInfo* _LI) {
@@ -208,7 +210,7 @@ public:
 
 		IRBuilder<> irBuilder(I);
 		irBuilder.CreateCall(tx_increment_func,
-			ConstantInt::get(getGlobalContext(), APInt(64, Inc)));
+			ConstantInt::get(I->getContext(), APInt(64, Inc)));
 	}
 
 	void insertCounterIncrement(BasicBlock* BB, size_t Inc) {
@@ -231,8 +233,9 @@ public:
 			// do not count no-op casts
 			if (CastInst* ci = dyn_cast<CastInst>(I)) {
 				// assuming 64-bit platform
-				static Type* IntPtrTy = Type::getInt64Ty(getGlobalContext());
-				if (ci->isNoopCast(IntPtrTy))
+				//TODO: check 64-bit? original below
+				// this --> static Type* IntPtrTy = Type::getInt64Ty(TheContext);
+				if (ci->isNoopCast(ci->getModule()->getDataLayout()))
 					continue;
 			}
 
@@ -264,8 +267,9 @@ public:
 		// do not count no-op casts
 		if (CastInst* ci = dyn_cast<CastInst>(I)) {
 			// assuming 64-bit platform
-			static Type* IntPtrTy = Type::getInt64Ty(getGlobalContext());
-			if (ci->isNoopCast(IntPtrTy))
+			//TODO: check 64-bit? original below
+			// this --> static Type* IntPtrTy = Type::getInt64Ty(TheContext);
+			if (ci->isNoopCast(ci->getModule()->getDataLayout()))
 				return;
 		}
 		// do not count phies and unreachables
@@ -424,7 +428,7 @@ public:
 		// we don't know the real trip count in loop, so use some constant
 		if (BasicBlock* preheader = L->getLoopPreheader()) {
 			size_t AVERAGE_TRIP_COUNT = 4;  // TODO: 4 is taken from top of my head
-			TerminatorInst* terminator = preheader->getTerminator();
+			Instruction* terminator = preheader->getTerminator();
 			insertCounterIncrement(terminator, BBPath * AVERAGE_TRIP_COUNT);
 		}
 #endif
@@ -456,7 +460,7 @@ public:
 				// substitute zero-condition with threshold_exceeded func
 				IRBuilder<> irBuilder(br);
 				Value* flag = irBuilder.CreateCall(tx_threshold_exceeded_func);
-				Value* flag_i1 = irBuilder.CreateTrunc(flag, Type::getInt1Ty(getGlobalContext()));
+				Value* flag_i1 = irBuilder.CreateTrunc(flag, Type::getInt1Ty(br->getContext()));
 				br->setCondition(flag_i1);
 
 				// add Tx end and Tx start after the checks (which is a True branch)
