@@ -27,6 +27,10 @@ echo -e "[ui]\nusername = Your Name <your@mail>" > .hg/hgrc
 hg com -m "1"
 hg import ${HAFT}install/patches/parsec-complete_20150703.patch -m "2"
 
+rm version
+sed -i 's|HUGE|HUGE_VAL|g' pkgs/apps/ferret/src/benchmark/ferret-*
+sed -i 's|HUGE|HUGE_VAL|g' pkgs/apps/ferret/src/src/lsh/LSH_query*
+
 cd bin/
 chmod +x parsecperf
 chmod +x parsecperftx
