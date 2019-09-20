@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #==============================================================================#
-# collect main *.opt.bc files from Parsec builds
+# collect main *.0.4.opt.bc files from Parsec builds
 #==============================================================================#
 
 set -x #echo on
@@ -19,19 +19,18 @@ mkdir -p ${LLVMBENCHPATH}/canneal/obj/
 mkdir -p ${LLVMBENCHPATH}/streamcluster/obj/
 mkdir -p ${LLVMBENCHPATH}/dedup/obj/
 
-cp ${PARSECPATH}/pkgs/apps/blackscholes/obj/${CONFIG}/blackscholes.opt.bc ${LLVMBENCHPATH}/blackscholes/obj/
+cp ${PARSECPATH}/pkgs/apps/blackscholes/obj/${CONFIG}/blackscholes.0.4.opt.bc ${LLVMBENCHPATH}/blackscholes/obj/blackscholes.opt.bc
 
-cp ${PARSECPATH}/pkgs/apps/ferret/obj/${CONFIG}/parsec/bin/ferret-pthreads.opt.bc ${LLVMBENCHPATH}/ferret/obj/
+cp ${PARSECPATH}/pkgs/apps/ferret/obj/${CONFIG}/parsec/bin/ferret-pthreads.0.4.opt.bc ${LLVMBENCHPATH}/ferret/obj/ferret-pthreads.opt.bc
 
-cp ${PARSECPATH}/pkgs/apps/swaptions/obj/${CONFIG}/swaptions.opt.bc ${LLVMBENCHPATH}/swaptions/obj/
+cp ${PARSECPATH}/pkgs/apps/swaptions/obj/${CONFIG}/swaptions.0.4.opt.bc ${LLVMBENCHPATH}/swaptions/obj/swaptions.opt.bc
 
-cp ${PARSECPATH}/pkgs/apps/vips/obj/${CONFIG}/tools/iofuncs/vips.opt.bc ${LLVMBENCHPATH}/vips/obj/
+cp ${PARSECPATH}/pkgs/apps/vips/obj/${CONFIG}/tools/iofuncs/vips.0.4.opt.bc ${LLVMBENCHPATH}/vips/obj/vips.opt.bc
 
-cp ${PARSECPATH}/pkgs/apps/x264/obj/${CONFIG}/x264.opt.bc ${LLVMBENCHPATH}/x264/obj/
+cp ${PARSECPATH}/pkgs/apps/x264/obj/${CONFIG}/x264.0.4.opt.bc ${LLVMBENCHPATH}/x264/obj/x264.opt.bc
 
-cp ${PARSECPATH}/pkgs/kernels/canneal/obj/${CONFIG}/canneal.opt.bc ${LLVMBENCHPATH}/canneal/obj/
+cp ${PARSECPATH}/pkgs/kernels/canneal/obj/${CONFIG}/canneal.0.4.opt.bc ${LLVMBENCHPATH}/canneal/obj/canneal.opt.bc
 
-cp ${PARSECPATH}/pkgs/kernels/streamcluster/obj/${CONFIG}/streamcluster.opt.bc ${LLVMBENCHPATH}/streamcluster/obj/
+cp ${PARSECPATH}/pkgs/kernels/streamcluster/obj/${CONFIG}/streamcluster.0.4.opt.bc ${LLVMBENCHPATH}/streamcluster/obj/streamcluster.opt.bc
 
-cp ${PARSECPATH}/pkgs/kernels/dedup/obj/${CONFIG}/dedup.opt.bc ${LLVMBENCHPATH}/dedup/obj/
-
+cp ${PARSECPATH}/pkgs/kernels/dedup/obj/${CONFIG}/dedup.0.4.opt.bc ${LLVMBENCHPATH}/dedup/obj/dedup.opt.bc

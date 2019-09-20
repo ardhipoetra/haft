@@ -1,5 +1,5 @@
-IMG_NAME = haft
-CONTAINER_NAME = haft_container
+IMG_NAME = haftv3
+CONTAINER_NAME = haft_container_v3
 
 DOCKER = docker
 DOCKER_RUN = $(DOCKER) run --cap-add SYS_ADMIN -it -v `pwd`/data:/data
@@ -30,4 +30,3 @@ clean:
 clean_all:
 	@$(DOCKER) rm $(CONTAINER_NAME)
 	@$(DOCKER) rmi $(IMG_NAME)
-

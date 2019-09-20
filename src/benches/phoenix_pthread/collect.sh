@@ -13,6 +13,5 @@ declare -a benchmarks=("histogram" "kmeans" "kmeans_nosharing" "linear_regressio
 
 for bm in "${benchmarks[@]}"; do
     mkdir -p ${BENCHPATH}/${bm}/obj/
-    cp ${PHOENIXPATH}/${bm}/build/clang/${bm}.bc  ${BENCHPATH}/${bm}/obj/
+    cp ${PHOENIXPATH}/${bm}/build/clang/${bm}.0.5.precodegen.bc  ${BENCHPATH}/${bm}/obj/
 done
-
