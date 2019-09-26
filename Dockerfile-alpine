@@ -1,0 +1,86 @@
+# Dockerfile for HAFT and LLVM 10 (Sep 2019)
+
+FROM alpine
+
+LABEL authors="Ardhi Putra Pratama Hartono (ardhi_pp.hartono@tu-dresden.de)"
+
+# == Basic packages ==
+RUN apk update && \
+    apk add bash git texinfo libxml2-dev cmake python flex bison gcc libc-dev make build-base binutils-gold binutils-dev  libunwind
+
+# use bash not sh
+RUN rm /bin/sh && \
+    ln -s /bin/bash /bin/sh
+
+# get perf
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && apk add --update perf
+RUN /bin/bash
+
+# == LLVM & CLang ==
+# prepare environment
+ENV LLVM_SOURCE=/root/bin/llvm/llvm/ \
+    LLVM_BUILD=/root/bin/llvm/build/ \
+    CLANG_SOURCE=/root/bin/llvm/clang/ \
+    COMRT_SOURCE=/root/bin/llvm/compiler-rt/ \
+    ROOT_LLVM=/root/bin/llvm/ \
+    GOLD_SRC=/root/bin/binutils/
+
+RUN mkdir -p $LLVM_SOURCE $LLVM_BUILD
+
+# get correct versions of sources
+RUN git clone --recurse-submodule https://github.com/ardhipoetra/llvm $LLVM_SOURCE && \
+    git clone --depth 1 git://sourceware.org/git/binutils-gdb.git $GOLD_SRC
+
+# TODO:enable openmp
+#    git clone http://llvm.org/git/openmp.git ${LLVM_SOURCE}projects\openmp && \
+
+RUN mv $LLVM_SOURCE/tools/clang/ $ROOT_LLVM && mv $LLVM_SOURCE/projects/compiler-rt/ $ROOT_LLVM
+
+#RUN mkdir -p ${GOLD_SRC}/../build-gold
+#
+#WORKDIR ${GOLD_SRC}/../build-gold
+#RUN ${GOLD_SRC}/configure --enable-gold --enable-plugins --disable-werror
+#RUN make -j8 all-gold && make -j8
+
+#RUN  cp gold/ld-new /usr/bin/ld && \
+#      cp binutils/ar /usr/bin/ar && \
+#      cp binutils/nm-new /usr/bin/nm-new
+
+# build LLVM
+WORKDIR $LLVM_BUILD
+RUN cmake -Wno-dev \
+		-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/root/build/ \
+		-DLLVM_ENABLE_PROJECTS="clang;compiler-rt" -DLLVM_BINUTILS_INCDIR=/usr/include \
+		-DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-alpine-linux-musl -DLLVM_HOST_TRIPLE=x86_64-alpine-linux-musl \
+		-DLLVM_BUILD_DOCS=OFF -DLLVM_BUILD_EXAMPLES=OFF \ -DCLANG_BUILD_EXAMPLES=OFF \
+		-DLLVM_BUILD_EXTERNAL_COMPILER_RT=ON -DLLVM_BUILD_LLVM_DYLIB=ON \
+		-DLLVM_ENABLE_ASSERTIONS=OFF -DLLVM_ENABLE_PIC=ON \ -DLLVM_ENABLE_RTTI=ON \
+		-DLLVM_ENABLE_SPHINX=OFF -DLLVM_ENABLE_TERMINFO=ON -DLLVM_ENABLE_ZLIB=ON \
+		-DLLVM_INCLUDE_EXAMPLES=OFF \ -DLLVM_LINK_LLVM_DYLIB=ON \
+		-DLLVM_APPEND_VC_REV=OFF -DCOMPILER_RT_INCLUDE_TESTS=ON \
+		-DCOMPILER_RT_BUILD_SANITIZERS=OFF  -DCOMPILER_RT_BUILD_XRAY=OFF \
+    -G "Unix Makefiles" ../llvm/ && \
+    make -j8 && \
+    make install
+
+# == HAFT ==
+ENV HAFT=/root/code/haft/
+COPY ./ ${HAFT}
+
+RUN make -C ${HAFT}src/tx/pass && \
+    make -C ${HAFT}src/tx/runtime && \
+    make -C ${HAFT}src/ilr/pass && \
+    \
+    make -C ${HAFT}src/benches/util/libc ACTION=helper && \
+    make -C ${HAFT}src/benches/util/renamer
+
+VOLUME /data
+
+WORKDIR /root/code/haft/
+
+# == Environment variables ==
+# number of runs in each performance experiment
+ENV NUM_RUNS=1
+
+# == Interface ==
+ENTRYPOINT ["/bin/bash"]
