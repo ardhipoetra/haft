@@ -2,7 +2,7 @@ IMG_NAME = haftv3
 CONTAINER_NAME = haft_container_v3
 
 DOCKER = docker
-DOCKER_RUN = $(DOCKER) run --cap-add SYS_ADMIN -it -v `pwd`/data:/data
+DOCKER_RUN = $(DOCKER) run --privileged --cap-add SYS_ADMIN --cap-add=SYS_PTRACE --security-opt seccomp=unconfined -it -v `pwd`/data:/data -v /home/ardhi/Public/sde:/sde
 
 .PHONY: all build run clean stop clean_all
 
