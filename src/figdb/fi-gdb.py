@@ -7,14 +7,15 @@ import signal
 import time
 import hashlib
 import shutil
+import sys
 
 # ---------------------------- LOCAL PATHS ----------------------------------- #
-GDB = "~/bin/binutils-gdb/gdb/gdb"
-SDE = "~/bin/intel_sde/sde64"
+GDB = "~/bin/build-gold/gdb/gdb"
+SDE = "/sde/sde64"
 
 # ---------------------------- CONSTANTS ------------------------------------- #
 DUMPINFO = True
-MAXTRIES = 10
+MAXTRIES = 10 # maximum attempts to inject fault
 
 # inject only in TSX-covered parts (otherwise inject in all code)
 ONLYTSX     = False
@@ -139,18 +140,14 @@ def identifyInstsInOneThread(dyntracefile, examinethreadid):
 
             inst_splitted = line.split()
             
-            if len(inst_splitted) < 5 or inst_splitted[1] != "INS":
+            #TODO inst_splitted[0] always INS, since we grep-ed from previous script
+            if len(inst_splitted) < 4 or inst_splitted[0] != "INS":
                 continue
 
             # dissect parts of line
-            thread_id  = inst_splitted[0].replace("TID", "").replace(":", "")
-            inst_addr  = inst_splitted[2]
-            inst_type  = inst_splitted[3]   # category, e.g, "BASE" and "RTM"
-            inst_name  = inst_splitted[4]   # mnemonic, e.g. "xor"
-
-            if int(thread_id) != examinethreadid:
-                # we ignore what other threads do
-                continue
+            inst_addr  = inst_splitted[1]   # address of instruction (occurred more than 1, probably)
+            inst_type  = inst_splitted[2]   # category, e.g, "BASE" and "RTM"
+            inst_name  = inst_splitted[3]   # mnemonic, e.g. "xor"
 
             # update last added to insts instruction with its successor
             if last_inst_addr != "DUMMY":
@@ -181,10 +178,10 @@ def identifyInstsInOneThread(dyntracefile, examinethreadid):
                     continue
             elif "SSE" in inst_type:
                 # --- get SSE (xmm) register
-                if len(inst_splitted) < 6:
+                if len(inst_splitted) < 5:
                     continue
                 # get output register name
-                reg_name = inst_splitted[5].split(",")[0]
+                reg_name = inst_splitted[4].split(",")[0]
                 # only xmm regs are supported
                 if reg_name.startswith("xmmword") == True:
                     continue
@@ -213,13 +210,18 @@ def identifyInsts(dyntracefile):
     # run identifyInstsInOneThread on all threads in program
     # except TID0 (thread 0 is main thread which does not do real processing)
     examinethreadid = 1
-    while True:
-        insts_modified = identifyInstsInOneThread(dyntracefile, examinethreadid)
-        if insts_modified == False:
-            break
-        examinethreadid += 1
+    insts_modified = identifyInstsInOneThread(dyntracefile, examinethreadid)
 
-    assert(len(insts) > 1)
+    # change because TIDx is not on sde debugtrace anymore
+    # TODO: can we allow only 1 inst?
+    if len(insts) < 1:
+        fulllogfile = "%s/%s" % (LOGDIR, FULLLOG)
+        with open(fulllogfile, "a") as f:
+            f.write("-No instruction-")
+            f.close()
+        sys.exit(-1)
+
+    # assert(len(insts) > 1)
     if DUMPINFO:
         print("[examined %d threads]" % (examinethreadid-1))
 #        print("insts = %s" % insts)

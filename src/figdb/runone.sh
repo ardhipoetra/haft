@@ -4,8 +4,10 @@
 source $1/params.sh
 
 # 1: native version
-python -u fi-gdb.py $FIGDBARGS -m nop  -p $1/$1.tx.exe -a "$ARGS" -d $1/$1.tx.log -l logs/native/$FIGDBRUN
+python -u fi-gdb.py $FIGDBARGS -m nop  -p $1/$1.tx.exe -a "$ARGS" -d $1/$1.tx-n.log -l logs/native/$FIGDBRUN
 # 2: ilr version
-python -u fi-gdb.py $FIGDBARGS -m nop  -p $1/$1.haft.exe  -a "$ARGS" -d $1/$1.haft.log  -l logs/ilr/$FIGDBRUN
+python -u fi-gdb.py $FIGDBARGS -m nop  -p $1/$1.haft.exe  -a "$ARGS" -d $1/$1.ilr.log  -l logs/ilr/$FIGDBRUN
 # 3: haft version
 python -u fi-gdb.py $FIGDBARGS -m full -p $1/$1.haft.exe  -a "$ARGS" -d $1/$1.haft.log  -l logs/haft/$FIGDBRUN
+
+#TODO: mismatches executable?
