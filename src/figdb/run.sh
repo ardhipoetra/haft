@@ -6,7 +6,7 @@ BASE_RUNS=1
 NUM_RUNS=50
 TIMEOUT=3600
 
-DTR_DIR=/data/
+DTR_DIR=/pool/
 
 # we want sequences [BASE_RUNS; BASE_RUNS+NUM_RUNS)
 NUM_RUNS=$((10#${BASE_RUNS}+10#${NUM_RUNS}-1))
@@ -20,14 +20,16 @@ export FIGDBRUN=prepare
 mkdir -p tmp/${FIGDBRUN}/
 source $1/params.sh
 
+mkdir -p ${DTR_DIR}/$1/
+
 echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope > /dev/null
-if [ ! -f $1/$1.tx.log ]; then
+if [ ! -f ${DTR_DIR}/$1/$1.tx.log ]; then
   $SDE -rtm-mode nop -debugtrace -odebugtrace ${DTR_DIR}/sde-debugtrace-out.txt -- $1/$1.tx.exe $ARGS
-  grep 'INS 0x0000000000' ${DTR_DIR}/sde-debugtrace-out.txt > $1/$1.tx.log
+  grep 'INS 0x0000000000' ${DTR_DIR}/sde-debugtrace-out.txt > ${DTR_DIR}/$1/$1.tx.log
 fi
-if [ ! -f $1/$1.haft.log ]; then
+if [ ! -f ${DTR_DIR}/$1/$1.haft.log ]; then
   $SDE -rtm-mode nop -debugtrace -odebugtrace ${DTR_DIR}/sde-debugtrace-out.txt -- $1/$1.haft.exe $ARGS
-  grep 'INS 0x0000000000' ${DTR_DIR}/sde-debugtrace-out.txt > $1/$1.haft.log
+  grep 'INS 0x0000000000' ${DTR_DIR}/sde-debugtrace-out.txt > ${DTR_DIR}/$1/$1.haft.log
 fi
 rm -f ${DTR_DIR}/sde-debugtrace-out.txt
 
