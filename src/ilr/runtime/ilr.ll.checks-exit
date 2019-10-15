@@ -12,6 +12,9 @@ declare <2 x i64> @llvm.x86.dqmovswift(<2 x i64>)
 declare <2 x double> @llvm.x86.pdmovswift(<2 x double>)
 declare <4 x float> @llvm.x86.psmovswift(<4 x float>)
 
+declare <4 x i64> @llvm.x86.vdqmovswift(<4 x i64>)
+declare <4 x double> @llvm.x86.vpdmovswift(<4 x double>)
+
 ; ===================================================================== helpers
 ; Function Attrs: noreturn nounwind
 declare void @exit(i32) #1
@@ -94,6 +97,20 @@ define <4 x float> @"SWIFT$move_ps"(<4 x float> %v) #0 {
 entry:
   %v.swift = call <4 x float> @llvm.x86.psmovswift(<4 x float> %v)
   ret <4 x float> %v.swift
+}
+
+; Function Attrs: alwaysinline nounwind uwtable
+define <4 x i64> @"SWIFT$move_d128"(<4 x i64> %v) #0 {
+entry:
+  %v.swift = call <4 x i64> @llvm.x86.vdqmovswift(<4 x i64> %v)
+  ret <4 x i64> %v.swift
+}
+
+; Function Attrs: alwaysinline nounwind uwtable
+define <4 x double> @"SWIFT$move_f128"(<4 x double> %v) #0 {
+entry:
+  %v.swift = call <4 x double> @llvm.x86.vpdmovswift(<4 x double> %v)
+  ret <4 x double> %v.swift
 }
 
 ; ==================================================================== checkers
@@ -233,6 +250,38 @@ entry:
   %bcs1 = bitcast <4 x float> %v1 to i128
   %bcs2 = bitcast <4 x float> %v2 to i128
   %cmp = icmp eq i128 %bcs1, %bcs2
+  br i1 %cmp, label %if.end, label %if.then
+
+if.then:                                          ; preds = %entry
+  tail call void @exit(i32 2) #2
+  unreachable
+
+if.end:                                           ; preds = %entry
+  ret void
+}
+
+; Function Attrs: alwaysinline nounwind uwtable
+define void @"SWIFT$check_d128"(<4 x i64> %v1, <4 x i64> %v2, i32 %id) #0 {
+entry:
+  %bcs1 = bitcast <4 x i64> %v1 to i256
+  %bcs2 = bitcast <4 x i64> %v2 to i256
+  %cmp = icmp eq i256 %bcs1, %bcs2
+  br i1 %cmp, label %if.end, label %if.then
+
+if.then:                                          ; preds = %entry
+  tail call void @exit(i32 2) #2
+  unreachable
+
+if.end:                                           ; preds = %entry
+  ret void
+}
+
+; Function Attrs: alwaysinline nounwind uwtable
+define void @"SWIFT$check_f128"(<4 x double> %v1, <4 x double> %v2, i32 %id) #0 {
+entry:
+  %bcs1 = bitcast <4 x double> %v1 to i256
+  %bcs2 = bitcast <4 x double> %v2 to i256
+  %cmp = icmp eq i256 %bcs1, %bcs2
   br i1 %cmp, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry

@@ -102,6 +102,8 @@ class SwiftHelpers {
 		addFunction(M, checkers, "SWIFT$check_ptr",    PointerType::getUnqual(Type::getInt8Ty(module->getContext())));
 		addFunction(M, checkers, "SWIFT$check_double", Type::getDoubleTy(module->getContext()));
 		addFunction(M, checkers, "SWIFT$check_float",  Type::getFloatTy(module->getContext()));
+		addFunction(M, checkers, "SWIFT$check_d128",   VectorType::get(Type::getInt64Ty(module->getContext()), 4));
+		addFunction(M, checkers, "SWIFT$check_f128",   VectorType::get(Type::getDoubleTy(module->getContext()),  4));
 		addFunction(M, checkers, "SWIFT$check_dq",     VectorType::get(Type::getInt64Ty(module->getContext()),  2));
 		addFunction(M, checkers, "SWIFT$check_pd",     VectorType::get(Type::getDoubleTy(module->getContext()), 2));
 		addFunction(M, checkers, "SWIFT$check_ps",     VectorType::get(Type::getFloatTy(module->getContext()),  4));
@@ -113,6 +115,8 @@ class SwiftHelpers {
 		addFunction(M, movers, "SWIFT$move_ptr",    PointerType::getUnqual(Type::getInt8Ty(module->getContext())));
 		addFunction(M, movers, "SWIFT$move_double", Type::getDoubleTy(module->getContext()));
 		addFunction(M, movers, "SWIFT$move_float",  Type::getFloatTy(module->getContext()));
+		addFunction(M, movers, "SWIFT$move_d128",   VectorType::get(Type::getInt64Ty(module->getContext()), 4));
+		addFunction(M, movers, "SWIFT$move_f128",   VectorType::get(Type::getDoubleTy(module->getContext()),  4));
 		addFunction(M, movers, "SWIFT$move_dq",     VectorType::get(Type::getInt64Ty(module->getContext()),  2));
 		addFunction(M, movers, "SWIFT$move_pd",     VectorType::get(Type::getDoubleTy(module->getContext()), 2));
 		addFunction(M, movers, "SWIFT$move_ps",     VectorType::get(Type::getFloatTy(module->getContext()),  4));
@@ -353,38 +357,65 @@ class SwiftTransformer {
 				Type* TyVecFloat  = VectorType::get(Type::getFloatTy(Ty->getContext()), 4);
 				Type* TyVecDouble = VectorType::get(Type::getDoubleTy(Ty->getContext()), 2);
 
+				Type* TyVecInt256  = VectorType::get(Type::getInt64Ty(Ty->getContext()), 4);
+				Type* TyVecDoubleD = VectorType::get(Type::getDoubleTy(Ty->getContext()), 4);
+
 				Type* VecTy = Ty->getVectorElementType();
-				if (VecTy->isIntegerTy() && Ty != TyVecInt64) {
-					unsigned NumEl = cast<VectorType>(Ty)->getNumElements();
-					if (NumEl == 2) {
-						// it's <2 x iX> but not <2 x i64>, zero-extend
-						v = irBuilder.CreateZExt(v, TyVecInt64);
-					} else if (NumEl == 4 && Ty != TyVecInt32) {
-						// it's <4 x iX> but not <4 x i32>, zero-extend
-						v = irBuilder.CreateZExt(v, TyVecInt32);
-					} else if (NumEl == 8 && Ty != TyVecInt16) {
-						// it's <8 x iX> but not <8 x i16>, zero-extend
-						v = irBuilder.CreateZExt(v, TyVecInt16);
-					} else if (NumEl == 16 && Ty != TyVecInt8) {
-						// it's <16 x iX> but not <16 x i8>, zero-extend
-						v = irBuilder.CreateZExt(v, TyVecInt8);
+				unsigned NumEl = cast<VectorType>(Ty)->getNumElements();
+				// it's okay if its <4 x i64>
+				if (VecTy->isIntegerTy() && Ty != TyVecInt256) {
+					unsigned IntBW = VecTy->getIntegerBitWidth();
+
+					// TODO: implement AVX-512
+					// its a x b where the total is 256 bit, handle by AVX
+					if (NumEl * IntBW > 128) { 
+						// its either <2 x i128> or <8 x i32> or <16 x i16> or <32 x i8>
+						v = irBuilder.CreateBitCast(v, TyVecInt256, "swift.vintveccast");	
+					} else { // handling by SSE
+						if (NumEl == 2) {
+							// it's <2 x iX> but not <2 x i64>, zero-extend
+							v = irBuilder.CreateZExt(v, TyVecInt64);
+						} else if (NumEl == 4 && Ty != TyVecInt32) {
+							// it's <4 x iX> but not <4 x i32>, zero-extend
+							v = irBuilder.CreateZExt(v, TyVecInt32);
+						} else if (NumEl == 8 && Ty != TyVecInt16) {
+							// it's <8 x iX> but not <8 x i16>, zero-extend
+							v = irBuilder.CreateZExt(v, TyVecInt16);
+						} else if (NumEl == 16 && Ty != TyVecInt8) {
+							// it's <16 x iX> but not <16 x i8>, zero-extend
+							v = irBuilder.CreateZExt(v, TyVecInt8);
+						}
+						// now it's <4 x i32> or <8 x i16> or <16 x i8> or <2 x i64>
+						v = irBuilder.CreateBitCast(v, TyVecInt64, "swift.intveccast");
 					}
-					// now it's <4 x i32> or <8 x i16> or <16 x i8> or <2 x i64>
-					v = irBuilder.CreateBitCast(v, TyVecInt64, "swift.intveccast");
 				} else
-				if (VecTy->isFloatTy()   && Ty != TyVecFloat) {
-					// TODO: <2 x float> FP-extended to <2 x double>, can change
-					//        results of computation
-					v = irBuilder.CreateFPExt(v, TyVecDouble, "swift.floatveccast");
+				if (VecTy->isFloatingPointTy()) { // FP vectors
+					// TODO: not 2 and 4 length
+					if (NumEl == 4) {
+						// ignored for now, since 4 double/float is handled 
+						// if(VecTy->isDoubleTy()) { // 4 x double
+						// 	v = irBuilder.CreateBitCast(v, TyVecDoubleD, "swift.vdoubleveccast");
+						// 	//cast to 2 x 128 to standardize
+						// }
+					} else if (NumEl == 2) {
+						if(Ty != TyVecFloat) {
+							// TODO: <2 x float> FP-extended to <2 x double>, may change computation?
+							v = irBuilder.CreateFPExt(v, TyVecDouble, "swift.floatveccast");
+						}
+						// ignore <2 x f128>, if any
+					} //TODO: <2?
 				} else
 				if (VecTy->isPointerTy()) {
 					// assuming pointers are always 64-bit wide and coming in pairs
 					assert(cast<VectorType>(Ty)->getNumElements() == 2 && "we support only <2 x iX*>");
 					v = irBuilder.CreatePtrToInt(v, TyVecInt64, "swift.ptrveccast");
 				}
+				// now we have : 
+				// SSE : 2xi64, 2xdouble (2x64b), 4xfloat (4x32b)
+				// AVX : 4xi64, 4xdouble (4x64b)
 				}
 				break;
-
+				
 			default:
 			    errs() << "don't know how to handle type " << *Ty << "\n";
 				assert(!"cannot create check for this type");
@@ -493,6 +524,8 @@ class SwiftTransformer {
 
 			// we could have a vector of non-64-bit integers, need to cast back
 			if (v->getType()->isVectorTy() && origType->getVectorElementType()->isIntegerTy()) {
+				Type* TyVecInt256  = VectorType::get(Type::getInt64Ty(move->getContext()), 4);
+				if (v->getType() != TyVecInt256) { // if not from 4 x i64
 					Type* TyVecInt64  = VectorType::get(Type::getInt64Ty(move->getContext()), 2);
 					Type* TyVecInt32  = VectorType::get(Type::getInt32Ty(move->getContext()), 4);
 					Type* TyVecInt16  = VectorType::get(Type::getInt16Ty(move->getContext()), 8);
@@ -512,7 +545,18 @@ class SwiftTransformer {
 						move = cast<Instruction>(irBuilder.CreateTrunc(move, origType));
 					}
 					move->setName(v->getName() + CLONE_SUFFIX);
+				} else { // now we have 4 x i64
+					// assuming everything is 256 bit anyway
+					move = cast<Instruction>(irBuilder.CreateBitCast(move, origType)); 
+					move->setName(v->getName() + CLONE_SUFFIX);
+				}
 			}
+
+			// we could have a <4 x double> casted to <2 x FP128>, need to cast back
+			// if (v->getType()->isVectorTy() && v->getType()->getVectorElementType()->isFP128Ty() &&
+			// 		origType->getVectorElementType()->isDoubleTy()) {
+			// 		move = cast<Instruction>(irBuilder.CreateBitCast(move, origType, v->getName() + CLONE_SUFFIX));
+			// }
 
 			// we could have a <2 x float> FP-extended to <2 x double>, need to trunc back
 			if (v->getType()->isVectorTy() && origType->getVectorElementType()->isFloatTy()) {
