@@ -5,6 +5,7 @@ include $(MKFILE_PATH)/Makefile.common
 ILR_RUNTIME = $(ILR_PATH)/runtime/ilr.ll.checks-exit
 ILR_PASSFILE = $(ILR_PATH)/pass/ilr_pass.so
 ILR_PASSNAME = -ilr
+LLVM_LLC = $(LLVM_PATH)/llc
 
 all:: $(NAME).ilr.exe
 
@@ -31,5 +32,6 @@ obj/$(NAME).ilr.bc: obj/$(NAME).ilr-linked.bc
 
 # executable
 $(NAME).ilr.exe: obj/$(NAME).ilr.bc $(addprefix obj/, $(LLS2))
-	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+	$(LLVM_LLC) -mattr="+avx,+sse4.2" -o obj/$(NAME).ilr.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $^
+	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ obj/$(NAME).ilr.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
 

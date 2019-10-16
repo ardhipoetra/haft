@@ -390,13 +390,12 @@ class SwiftTransformer {
 					}
 				} else
 				if (VecTy->isFloatingPointTy()) { // FP vectors
-					// TODO: not 2 and 4 length
-					if (NumEl == 4) {
-						// ignored for now, since 4 double/float is handled 
-						// if(VecTy->isDoubleTy()) { // 4 x double
-						// 	v = irBuilder.CreateBitCast(v, TyVecDoubleD, "swift.vdoubleveccast");
-						// 	//cast to 2 x 128 to standardize
-						// }
+					// TODO: not 2 and 8 length
+					if (NumEl == 8) {
+						if(VecTy->isFloatTy()) { // 8 x float
+							v = irBuilder.CreateBitCast(v, TyVecDoubleD, "swift.vdoubleveccast");
+							//cast to 4 x double to standardize
+						}
 					} else if (NumEl == 2) {
 						if(Ty != TyVecFloat) {
 							// TODO: <2 x float> FP-extended to <2 x double>, may change computation?
@@ -552,11 +551,11 @@ class SwiftTransformer {
 				}
 			}
 
-			// we could have a <4 x double> casted to <2 x FP128>, need to cast back
-			// if (v->getType()->isVectorTy() && v->getType()->getVectorElementType()->isFP128Ty() &&
-			// 		origType->getVectorElementType()->isDoubleTy()) {
-			// 		move = cast<Instruction>(irBuilder.CreateBitCast(move, origType, v->getName() + CLONE_SUFFIX));
-			// }
+			// we could have a <8 x float> casted to <4 x double>, need to cast back
+			if (v->getType()->isVectorTy() && v->getType()->getVectorElementType()->isDoubleTy() &&
+					origType->getVectorElementType()->isFloatTy() && cast<VectorType>(origType)->getNumElements() == 8) {
+					move = cast<Instruction>(irBuilder.CreateBitCast(move, origType, v->getName() + CLONE_SUFFIX));
+			}
 
 			// we could have a <2 x float> FP-extended to <2 x double>, need to trunc back
 			if (v->getType()->isVectorTy() && origType->getVectorElementType()->isFloatTy()) {

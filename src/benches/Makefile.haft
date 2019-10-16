@@ -9,6 +9,7 @@ TX_PASSNAME = -tx
 ILR_RUNTIME = $(ILR_PATH)/runtime/ilr.ll.checks-exit
 ILR_PASSFILE = $(ILR_PATH)/pass/ilr_pass.so
 ILR_PASSNAME = -ilr
+LLVM_LLC = $(LLVM_PATH)/llc
 
 all:: $(NAME).haft.exe
 
@@ -47,5 +48,6 @@ obj/$(NAME).haft.bc: obj/$(NAME).haft-linked.bc
 
 # executable
 $(NAME).haft.exe: obj/$(NAME).haft.bc $(addprefix obj/, $(LLS2))
-	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+	$(LLVM_LLC) -mattr="+avx,+sse4.2,+rtm" -o obj/$(NAME).haft.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $^
+	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ obj/$(NAME).haft.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
 
