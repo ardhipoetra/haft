@@ -47,7 +47,10 @@ obj/$(NAME).haft.bc: obj/$(NAME).haft-linked.bc
 	$(LLVM_OPT) -always-inline obj/$(NAME).haft-noinline.bc -o $@
 
 # executable
-$(NAME).haft.exe: obj/$(NAME).haft.bc $(addprefix obj/, $(LLS2))
-	$(LLVM_LLC) -mattr="+avx,+sse4.2,+rtm" -o obj/$(NAME).haft.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $^
-	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ obj/$(NAME).haft.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+$(NAME).haft.exe-default: obj/$(NAME).haft.bc $(addprefix obj/, $(LLS2))
+#	$(LLVM_LLC) -mattr="+avx,+sse4.2,+rtm" -o obj/$(NAME).haft.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $^
+	$(LLVM_CLANGPP) $(CCFLAGS) -o $(NAME).haft.exe $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+
+%:	%-default
+	@ true
 

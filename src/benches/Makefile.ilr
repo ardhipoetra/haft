@@ -31,7 +31,10 @@ obj/$(NAME).ilr.bc: obj/$(NAME).ilr-linked.bc
 	$(LLVM_OPT) -always-inline obj/$(NAME).ilr-noinline.bc -o $@
 
 # executable
-$(NAME).ilr.exe: obj/$(NAME).ilr.bc $(addprefix obj/, $(LLS2))
-	$(LLVM_LLC) -mattr="+avx,+sse4.2" -o obj/$(NAME).ilr.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $^
-	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ obj/$(NAME).ilr.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+$(NAME).ilr.exe-default: obj/$(NAME).ilr.bc $(addprefix obj/, $(LLS2))
+#	$(LLVM_LLC) -mattr="+sse4.2" -o obj/$(NAME).ilr.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $^
+#	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ obj/$(NAME).ilr.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+	$(LLVM_CLANGPP) $(CCFLAGS) -o $(NAME).ilr.exe $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
 
+%:	%-default
+	@ true

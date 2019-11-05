@@ -18,7 +18,7 @@ RENAME_PASSNAME = -rename
 
 # ================================ CCFLAGS =================================== #
 # compilation/linkage flags 
-CCFLAGS := -O3 -msse4.2 $(CCFLAGS)
+CCFLAGS := -O3 -msse4.2 -mavx $(CCFLAGS)
 # flags for Hardware Transactional Memory used
 CCFLAGS := $(CCFLAGS) $(HTM_FLAGS)
 # we need to disable usage of llvm.mem* intrinsics, otherwise have recursion
