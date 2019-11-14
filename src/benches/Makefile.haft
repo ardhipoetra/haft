@@ -13,6 +13,8 @@ LLVM_LLC = $(LLVM_PATH)/llc
 
 all:: $(NAME).haft.exe
 
+object:: $(NAME).haft.o
+
 clean::
 	rm -f obj/tx.bc obj/$(NAME).haft-linked.bc obj/$(NAME).haft-noinline.bc obj/$(NAME).haft.bc
 	rm -f $(NAME).haft.exe
@@ -48,8 +50,11 @@ obj/$(NAME).haft.bc: obj/$(NAME).haft-linked.bc
 
 # executable
 $(NAME).haft.exe-default: obj/$(NAME).haft.bc $(addprefix obj/, $(LLS2))
-#	$(LLVM_LLC) -mattr="+avx,+sse4.2,+rtm" -o obj/$(NAME).haft.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $^
 	$(LLVM_CLANGPP) $(CCFLAGS) -o $(NAME).haft.exe $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+
+# object-file
+$(NAME).haft.o: obj/$(NAME).haft.bc $(addprefix obj/, $(LLS2))
+	$(LLVM_CLANGPP) $(CCFLAGS) -c -o $(NAME).haft.o $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
 
 %:	%-default
 	@ true

@@ -9,6 +9,8 @@ LLVM_LLC = $(LLVM_PATH)/llc
 
 all:: $(NAME).ilr.exe
 
+object:: $(NAME).ilr.o
+
 clean::
 	rm -f obj/$(NAME).ilr-linked.bc obj/$(NAME).ilr-noinline.bc obj/$(NAME).ilr.bc
 	rm -f $(NAME).ilr.exe
@@ -32,9 +34,11 @@ obj/$(NAME).ilr.bc: obj/$(NAME).ilr-linked.bc
 
 # executable
 $(NAME).ilr.exe-default: obj/$(NAME).ilr.bc $(addprefix obj/, $(LLS2))
-#	$(LLVM_LLC) -mattr="+sse4.2" -o obj/$(NAME).ilr.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $^
-#	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ obj/$(NAME).ilr.s -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
 	$(LLVM_CLANGPP) $(CCFLAGS) -o $(NAME).ilr.exe $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+
+# object-file
+$(NAME).ilr.o: obj/$(NAME).ilr.bc $(addprefix obj/, $(LLS2))
+	$(LLVM_CLANGPP) $(CCFLAGS) -c -o $(NAME).ilr.o $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
 
 %:	%-default
 	@ true

@@ -4,6 +4,8 @@ include $(MKFILE_PATH)/Makefile.common
 
 all:: $(NAME).native.exe
 
+object:: $(NAME).native.o
+
 clean::
 	rm -f obj/$(NAME).native-linked.bc obj/$(NAME).native-renamed.bc
 	rm -f $(NAME).native.exe
@@ -23,4 +25,8 @@ obj/$(NAME).native.bc: obj/$(NAME).native-renamed.bc
 # executable
 $(NAME).native.exe: obj/$(NAME).native.bc $(addprefix obj/, $(LLS2))
 	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+
+# object-file
+$(NAME).native.o: obj/$(NAME).native.bc $(addprefix obj/, $(LLS2))
+	$(LLVM_CLANGPP) $(CCFLAGS) -c -o $@ $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
 

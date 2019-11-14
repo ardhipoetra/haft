@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 apk update
-apk add mercurial wget
+apk add git wget
 
 mkdir -p /root/bin/benchmarks/
 cd /root/bin/benchmarks/
-hg clone https://bitbucket.org/dimakuv/phoenix-pthreads  # TODO: change to github
+git clone https://github.com/ardhipoetra/phoenix-pthreads
 cd phoenix-pthreads
 
 export HOME='/root'

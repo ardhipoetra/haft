@@ -28,8 +28,8 @@ ENV LLVM_SOURCE=/root/bin/llvm/llvm/ \
 RUN mkdir -p $LLVM_SOURCE $LLVM_BUILD
 
 # get correct versions of sources
-RUN git clone --recurse-submodule https://github.com/ardhipoetra/llvm $LLVM_SOURCE && \
-    git clone --depth 1 git://sourceware.org/git/binutils-gdb.git $GOLD_SRC
+RUN git clone --recurse-submodule https://github.com/ardhipoetra/llvm $LLVM_SOURCE
+RUN wget ftp://sourceware.org/pub/binutils/snapshots/binutils-2.31.90.tar.xz && tar xf binutils-2.31.90.tar.xz && rm binutils-2.31.90.tar.xz && mv binutils-2.31.90 $GOLD_SRC
 
 # TODO:enable openmp
 #    git clone http://llvm.org/git/openmp.git ${LLVM_SOURCE}projects\openmp && \
@@ -73,6 +73,9 @@ RUN make -C ${HAFT}src/tx/pass && \
     \
     make -C ${HAFT}src/benches/util/libc ACTION=helper && \
     make -C ${HAFT}src/benches/util/renamer
+
+# download and compile phoenix benchmark
+RUN ${HAFT}/install/install_phoenix_alpine.sh
 
 VOLUME /data
 

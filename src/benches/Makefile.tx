@@ -10,6 +10,9 @@ CCFLAGS := $(CCFLAGS) $(HTM_FLAGS)
 
 all:: $(NAME).tx.exe
 
+object:: $(NAME).tx.o
+
+
 clean::
 	rm -f obj/tx.bc obj/$(NAME).tx-linked.bc obj/$(NAME).tx-renamed.bc obj/$(NAME).tx-noinline.bc obj/$(NAME).tx.bc
 	rm -f $(NAME).tx.exe
@@ -39,3 +42,6 @@ obj/$(NAME).tx.bc: obj/$(NAME).tx-linked.bc
 $(NAME).tx.exe: obj/$(NAME).tx.bc $(addprefix obj/, $(LLS2))
 	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
 
+# object-file
+$(NAME).tx.o: obj/$(NAME).tx.bc $(addprefix obj/, $(LLS2))
+	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)

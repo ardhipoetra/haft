@@ -15,10 +15,11 @@ for bmidx in "${!benchmarks[@]}"; do
   tar -xzf ${bm}.tar.gz
   mkdir -p ${bm}/input/
 
-  mv -uf ${bm}_datafiles/* ${bm}/input/
+  #in linux
+  #mv -uf ${bm}_datafiles/* ${bm}/input/
 
   #in alpine :
-  #mv -f ${bm}_datafiles/* ${bm}/input/
+  mv -f ${bm}_datafiles/* ${bm}/input/
   
   rm -rf ${bm}_datafiles/
 done
