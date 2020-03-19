@@ -1,0 +1,7 @@
+NAME= cherokee-worker
+SRC = cherokee-worker
+
+CCFLAGS := $(CCFLAGS) -L/usr/local/lib/ -lcherokee-base -lcherokee-server
+
+include ../Makefile.$(ACTION)
+
