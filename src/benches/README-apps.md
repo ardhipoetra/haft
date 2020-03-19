@@ -1,3 +1,12 @@
+# Note
+
+- compile the application using the following configurations. 
+- Do not forget to use wllvm or gllvm to generate bitcode (.bc) after compilation.
+	- apk add py-pip
+	- pip install wllvm
+	- config wllvm (set `LLVM_COMPILER` etc
+- copy the bitcode to src/benches/<apps>/obj
+
 # httpd
 
 to configure : 
@@ -7,7 +16,7 @@ CC=wllvm CCFLAGS="-Wl,--whole-archive" ./configure --enable-static-support --ena
 then make and make install
 
 
-#light httpd
+# light httpd
 configure
 ```
 LIGHTTPD_STATIC=yes CPPFLAGS=-DLIGHTTPD_STATIC CC=wllvm ./configure --without-zlib --without-bzip2 --without-pcre --without-pic --disable-shared --disable-ipv6 --enable-static=yes
@@ -33,13 +42,21 @@ PLUGIN_INIT(mod_staticfile)
 then make
 
 # memcached
+download tar.gz from memcached website (or clone).
+install libevent (dev?)
 configure
 ```
 CC=wllvm ./configure
 ```
 make
 
+## running
+```
+./memcached.native.exe -u root -l 172.17.0.3 -p 11211 -m 64 -o no_lru_crawler,no_lru_maintainer
+```
+
 # redis
+install linux-headers (find linux/version.h)
 just make
 ```
 make CC=wllvm MALLOC=libc
@@ -51,5 +68,8 @@ copy the dependencies
 ../deps/lua/src/liblua.a
 ```
 
-then, compile as usual
+then, compile with HAFT as usual
 
+# cherokee
+
+configure and make as usual
