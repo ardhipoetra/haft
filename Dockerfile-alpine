@@ -13,7 +13,7 @@ RUN rm /bin/sh && \
     ln -s /bin/bash /bin/sh
 
 # get perf
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && apk add --update perf
+# RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && apk add --update perf
 RUN /bin/bash
 
 # == LLVM & CLang ==
