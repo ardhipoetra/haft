@@ -6,7 +6,7 @@ TX_RUNTIME = $(TX_PATH)/runtime/tx.c
 TX_PASSFILE = $(TX_PATH)/pass/tx_pass.so
 TX_PASSNAME = -tx
 
-ILR_RUNTIME = $(ILR_PATH)/runtime/ilr.ll.checks-exit
+ILR_RUNTIME = $(ILR_PATH)/runtime/ilr.ll.checks-txabort
 ILR_PASSFILE = $(ILR_PATH)/pass/ilr_pass.so
 ILR_PASSNAME = -ilr
 LLVM_LLC = $(LLVM_PATH)/llc

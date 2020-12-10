@@ -44,4 +44,4 @@ $(NAME).tx.exe: obj/$(NAME).tx.bc $(addprefix obj/, $(LLS2))
 
 # object-file
 $(NAME).tx.o: obj/$(NAME).tx.bc $(addprefix obj/, $(LLS2))
-	$(LLVM_CLANGPP) $(CCFLAGS) -o $@ $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)
+	$(LLVM_CLANGPP) $(CCFLAGS) -c -o $@ $^ -I $(INCLUDE_DIRS) -L $(LIB_DIRS) $(LIBS)

@@ -20,11 +20,12 @@ obj/$(NAME).native-linked.bc: $(addprefix obj/, $(LLS)) $(UTILS)
 	$(LLVM_LINK) -o $@ $^
 
 # substitute libc functions + inline
-obj/$(NAME).native-renamed.bc: obj/$(NAME).native-linked.bc
-	$(LLVM_OPT) -load $(RENAME_PASSFILE) $(RENAME_PASSNAME) -inline $^ -o $@
+# obj/$(NAME).native-renamed.bc: obj/$(NAME).native-linked.bc
+# 	$(LLVM_OPT) -load $(RENAME_PASSFILE) $(RENAME_PASSNAME) -inline $^ -o $@
 
 # link all sources-to-process + runtime
-obj/$(NAME).ilr-linked.bc: obj/$(NAME).native-renamed.bc $(ILR_RUNTIME)
+obj/$(NAME).ilr-linked.bc: $(addprefix obj/, $(LLS)) $(ILR_RUNTIME)
+# obj/$(NAME).ilr-linked.bc: obj/$(NAME).native-renamed.bc $(ILR_RUNTIME)
 	$(LLVM_LINK) -o $@ $^
 
 # instruction-level replication
