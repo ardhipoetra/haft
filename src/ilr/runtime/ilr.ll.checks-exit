@@ -1,5 +1,7 @@
-target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-linux-gnu"
+; target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-alpine-linux-gnu"
 
 ; ================================================================== intrinsics
 declare i64 @llvm.x86.movswift.i64(i64)
@@ -11,9 +13,6 @@ declare float  @llvm.x86.fmovswift.f32(float)
 declare <2 x i64> @llvm.x86.dqmovswift(<2 x i64>)
 declare <2 x double> @llvm.x86.pdmovswift(<2 x double>)
 declare <4 x float> @llvm.x86.psmovswift(<4 x float>)
-
-declare <4 x i64> @llvm.x86.vdqmovswift(<4 x i64>)
-declare <4 x double> @llvm.x86.vpdmovswift(<4 x double>)
 
 ; ===================================================================== helpers
 ; Function Attrs: noreturn nounwind
@@ -97,20 +96,6 @@ define <4 x float> @"SWIFT$move_ps"(<4 x float> %v) #0 {
 entry:
   %v.swift = call <4 x float> @llvm.x86.psmovswift(<4 x float> %v)
   ret <4 x float> %v.swift
-}
-
-; Function Attrs: alwaysinline nounwind uwtable
-define <4 x i64> @"SWIFT$move_d128"(<4 x i64> %v) #0 {
-entry:
-  %v.swift = call <4 x i64> @llvm.x86.vdqmovswift(<4 x i64> %v)
-  ret <4 x i64> %v.swift
-}
-
-; Function Attrs: alwaysinline nounwind uwtable
-define <4 x double> @"SWIFT$move_f128"(<4 x double> %v) #0 {
-entry:
-  %v.swift = call <4 x double> @llvm.x86.vpdmovswift(<4 x double> %v)
-  ret <4 x double> %v.swift
 }
 
 ; ==================================================================== checkers
@@ -250,38 +235,6 @@ entry:
   %bcs1 = bitcast <4 x float> %v1 to i128
   %bcs2 = bitcast <4 x float> %v2 to i128
   %cmp = icmp eq i128 %bcs1, %bcs2
-  br i1 %cmp, label %if.end, label %if.then
-
-if.then:                                          ; preds = %entry
-  tail call void @exit(i32 2) #2
-  unreachable
-
-if.end:                                           ; preds = %entry
-  ret void
-}
-
-; Function Attrs: alwaysinline nounwind uwtable
-define void @"SWIFT$check_d128"(<4 x i64> %v1, <4 x i64> %v2, i32 %id) #0 {
-entry:
-  %bcs1 = bitcast <4 x i64> %v1 to i256
-  %bcs2 = bitcast <4 x i64> %v2 to i256
-  %cmp = icmp eq i256 %bcs1, %bcs2
-  br i1 %cmp, label %if.end, label %if.then
-
-if.then:                                          ; preds = %entry
-  tail call void @exit(i32 2) #2
-  unreachable
-
-if.end:                                           ; preds = %entry
-  ret void
-}
-
-; Function Attrs: alwaysinline nounwind uwtable
-define void @"SWIFT$check_f128"(<4 x double> %v1, <4 x double> %v2, i32 %id) #0 {
-entry:
-  %bcs1 = bitcast <4 x double> %v1 to i256
-  %bcs2 = bitcast <4 x double> %v2 to i256
-  %cmp = icmp eq i256 %bcs1, %bcs2
   br i1 %cmp, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
